@@ -1,0 +1,1 @@
+from .weightdict import atomicWeightsDecimal
