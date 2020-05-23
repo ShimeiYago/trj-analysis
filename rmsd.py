@@ -10,26 +10,33 @@ from utils import atomicWeightsDecimal as wdict
 
 def main():
     parser = argparse.ArgumentParser(description='This script calculates weighted-RMSD of trr-file inputted.')
-    parser.add_argument('-t', '--trr', default='input/fitted.trr', help='trr file')
-    parser.add_argument('-s', '--top', default='input/topo.gro', help='topology file')
+    parser.add_argument('-t', '--trr', nargs='+', required=True, help='trr files')
+    parser.add_argument('-s', '--top', required=True, help='topology file')
     parser.add_argument('-o', '--out', default='./rmsd.png', help='output path')
     args = parser.parse_args()
 
     ### load ###
-    trj_mdtraj = md.load(args.trr, top=args.top)
-    trj = trj_mdtraj.xyz
-    topo = trj_mdtraj.topology
+    trj_mdtraj_list = [md.load(trrpath, top=args.top) for trrpath in args.trr]
+    trj_list = [trj_mdtraj.xyz for trj_mdtraj in trj_mdtraj_list]
+    topo = trj_mdtraj_list[0].topology
 
     weightlist = make_weightlist(topo)
 
     ### calucrate weighted-RMSD
-    rmsds = [calu_weighted_rmsd(trj[i], trj[0], weightlist) for i in range(trj.shape[0])]
+    rmsds_list = []
+    for trj in trj_list:
+        rmsds = [calu_weighted_rmsd(trj[i], trj[0], weightlist) for i in range(trj.shape[0])]
+        rmsds_list.append(rmsds)
 
     ### plot ###
-    x = range(len(rmsds))
-
     fig = plt.figure()
-    plt.plot(x, rmsds)
+    for i, rmsds in enumerate(rmsds_list):
+        x = range(len(rmsds))
+        plt.plot(x, rmsds, label=os.path.basename(args.trr[i]))
+    
+    plt.xlabel('time (ps)')
+    plt.ylabel('weighted RMSD (nm)')
+    plt.legend()
     fig.savefig(args.out)
 
 
