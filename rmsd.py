@@ -13,11 +13,12 @@ def main():
     parser.add_argument('-t', '--trr', nargs='+', required=True, help='trr files')
     parser.add_argument('-s', '--top', required=True, help='topology file')
     parser.add_argument('-o', '--out', default='./rmsd.png', help='output path')
+    parser.add_argument('-u', '--upper_time', type=int, help='Upper time of trajectory to draw')
     args = parser.parse_args()
 
     ### load ###
     trj_mdtraj_list = [md.load(trrpath, top=args.top) for trrpath in args.trr]
-    trj_list = [trj_mdtraj.xyz for trj_mdtraj in trj_mdtraj_list]
+    trj_list = [trj_mdtraj.xyz[:args.upper_time] for trj_mdtraj in trj_mdtraj_list]
     topo = trj_mdtraj_list[0].topology
 
     weightlist = make_weightlist(topo)
@@ -36,7 +37,7 @@ def main():
     
     plt.xlabel('time (ps)')
     plt.ylabel('weighted RMSD (nm)')
-    plt.legend()
+    plt.legend(loc='upper left')
     fig.savefig(args.out)
 
 
