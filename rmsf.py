@@ -10,7 +10,8 @@ import argparse
 def main():
     parser = argparse.ArgumentParser(description='This script calculates RMSF of trr-file inputted.')
     parser.add_argument('-t', '--trr', nargs='+', required=True, help='trr files')
-    parser.add_argument('-s', '--top', default='input/topo.gro', help='topology file')
+    parser.add_argument('--label', nargs='+', help='specify each data labels')
+    parser.add_argument('-s', '--top', default='input/topo.gro', required=True, help='topology file')
     parser.add_argument('-o', '--out', default='./rmsf.png', help='output path')
     args = parser.parse_args()
 
@@ -21,6 +22,11 @@ def main():
 
     CAindexlist = [atom.index for atom in topo.atoms if atom.name == 'CA']
 
+    # ## label list ## #
+    if args.label:
+        labels = args.label
+    else:
+        labels = [os.path.basename(trrpath) for trrpath in args.trr]
 
     ### calucrate RMSF of Ca
     rmsfs_list = []
@@ -28,12 +34,11 @@ def main():
         rmsfs = calu_rmsfs(trj[:, CAindexlist, :])
         rmsfs_list.append(rmsfs)
 
-
     ### plot ###
     fig = plt.figure()
     for i, rmsfs in enumerate(rmsfs_list):
         x = range(1, len(CAindexlist)+1)
-        plt.plot(x, rmsfs, label=os.path.basename(args.trr[i]))
+        plt.plot(x, rmsfs, label=labels[i])
 
     plt.xlabel('C-alpha Index')
     plt.ylabel('RMSF (nm)')
